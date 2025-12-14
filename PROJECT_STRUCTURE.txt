@@ -1,0 +1,57 @@
+.
+├── IMPLEMENTATION_SUMMARY.md
+├── PROJECT_STRUCTURE.txt
+├── README.md
+├── README_EXTENDED.md
+├── alembic
+│   ├── env.py
+│   └── script.py.mako
+├── alembic.ini
+├── app
+│   ├── __init__.py
+│   ├── api
+│   │   ├── __init__.py
+│   │   └── v1
+│   ├── celery_app.py
+│   ├── core
+│   │   ├── __init__.py
+│   │   ├── config.py
+│   │   ├── deps.py
+│   │   └── security.py
+│   ├── db
+│   │   ├── __init__.py
+│   │   └── base.py
+│   ├── main.py
+│   ├── models
+│   │   ├── __init__.py
+│   │   ├── auction.py
+│   │   ├── bid.py
+│   │   ├── event_log.py
+│   │   ├── notification.py
+│   │   ├── payment.py
+│   │   └── user.py
+│   ├── schemas
+│   │   ├── __init__.py
+│   │   ├── auction.py
+│   │   ├── bid.py
+│   │   ├── payment.py
+│   │   └── user.py
+│   └── services
+│       ├── __init__.py
+│       ├── auction_tasks.py
+│       ├── notification_service.py
+│       ├── payment_service.py
+│       └── websocket_manager.py
+├── celery_worker.py
+├── docker-compose.yml
+├── pytest.ini
+├── requirements.txt
+├── setup.sh
+└── tests
+    ├── __init__.py
+    ├── conftest.py
+    ├── test_auctions.py
+    ├── test_auth.py
+    └── test_bids.py
+
+11 directories, 44 files

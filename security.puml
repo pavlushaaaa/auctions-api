@@ -1,0 +1,31 @@
+@startuml
+actor Participant
+actor Organizer
+actor Admin
+participant "Auth Service" as Auth
+participant "Auction API" as API
+database "PostgreSQL" as DB
+collections "Audit Logs" as Logs
+participant "Background Worker" as Worker
+participant "SMTP Server" as SMTP
+
+== Аутентифікація ==
+Participant -> Auth: Надсилання email+пароль
+Auth -> DB: Перевірка bcrypt-хеша
+Auth --> Participant: JWT Access Token
+
+== Авторизація та ставки ==
+Participant -> API: Place Bid (JWT)
+API -> API: Перевірка токена (підпис/строк)
+API -> API: RBAC перевірка ролей
+API -> DB: Транзакція + row-level lock
+API -> Logs: bid_created()
+API --> Participant: Ставка успішна
+
+== Завершення аукціону ==
+Worker -> DB: Перевірка дедлайну
+Worker -> DB: Визначення переможця
+Worker -> Logs: auction_closed()
+Worker -> SMTP: Надсилання сповіщення
+SMTP --> Participant: Email
+@enduml

@@ -1,0 +1,170 @@
+@startuml Auction System ERD
+
+!define primary_key(x) <b><color:#b8861b><&key></color> x</b>
+!define foreign_key(x) <color:#aaaaaa><&key></color> x
+!define column(x) <color:#efefef><&media-record></color> x
+!define table(x) entity x << (T, #FFAAAA) >>
+
+' Entities
+entity "USERS" as users {
+  primary_key(id): INT
+  --
+  column(email): VARCHAR(255) <<unique>>
+  column(hashed_password): VARCHAR(255)
+  column(role): ENUM
+  column(full_name): VARCHAR(255)
+  column(is_blocked): BOOLEAN
+  column(telegram_id): VARCHAR(100) <<unique>>
+  column(created_at): TIMESTAMP
+}
+
+entity "AUCTIONS" as auctions {
+  primary_key(id): INT
+  --
+  column(title): VARCHAR(255)
+  column(description): TEXT
+  column(category): VARCHAR(100)
+  column(starting_price): DECIMAL(10,2)
+  column(current_price): DECIMAL(10,2)
+  column(bid_step): DECIMAL(10,2)
+  column(start_time): TIMESTAMP
+  column(end_time): TIMESTAMP
+  column(status): ENUM
+  column(auction_type): ENUM
+  foreign_key(organizer_id): INT
+  foreign_key(winner_id): INT
+  column(buyout_price): DECIMAL(10,2)
+  column(reserve_price): DECIMAL(10,2)
+  column(commission_rate): DECIMAL(5,2)
+  column(anti_snipe_enabled): BOOLEAN
+  column(anti_snipe_seconds): INT
+  column(anti_snipe_extension): INT
+  column(anti_snipe_max_extensions): INT
+  column(anti_snipe_count): INT
+  column(created_at): TIMESTAMP
+  column(updated_at): TIMESTAMP
+}
+
+entity "BIDS" as bids {
+  primary_key(id): INT
+  --
+  foreign_key(auction_id): INT
+  foreign_key(user_id): INT
+  column(amount): DECIMAL(10,2)
+  column(created_at): TIMESTAMP
+}
+
+entity "PAYMENTS" as payments {
+  primary_key(id): INT
+  --
+  foreign_key(auction_id): INT
+  foreign_key(user_id): INT
+  column(amount): DECIMAL(10,2)
+  column(commission): DECIMAL(10,2)
+  column(total_amount): DECIMAL(10,2)
+  column(status): ENUM
+  column(payment_method): VARCHAR(50)
+  column(transaction_id): VARCHAR(100) <<unique>>
+  column(metadata): JSON
+  column(created_at): TIMESTAMP
+  column(updated_at): TIMESTAMP
+}
+
+entity "NOTIFICATIONS" as notifications {
+  primary_key(id): INT
+  --
+  foreign_key(user_id): INT
+  foreign_key(auction_id): INT
+  column(notification_type): ENUM
+  column(channel): ENUM
+  column(subject): VARCHAR(255)
+  column(message): TEXT
+  column(sent): BOOLEAN
+  column(sent_at): TIMESTAMP
+  column(created_at): TIMESTAMP
+}
+
+entity "EVENT_LOGS" as event_logs {
+  primary_key(id): INT
+  --
+  column(event_type): VARCHAR(100)
+  foreign_key(user_id): INT
+  foreign_key(auction_id): INT
+  column(details): JSON
+  column(created_at): TIMESTAMP
+}
+
+' Relationships
+users ||--o{ auctions : "organizes\n(organizer_id)"
+users ||--o{ auctions : "wins\n(winner_id)"
+users ||--o{ bids : "places\n(user_id)"
+users ||--o{ payments : "makes\n(user_id)"
+users ||--o{ notifications : "receives\n(user_id)"
+users ||--o{ event_logs : "performs\n(user_id)"
+
+auctions ||--o{ bids : "receives\n(auction_id)"
+auctions ||--o{ payments : "has payment\n(auction_id)"
+auctions ||--o{ notifications : "triggers\n(auction_id)"
+auctions ||--o{ event_logs : "logs\n(auction_id)"
+
+note right of users
+  **Roles:**
+  - participant
+  - organizer
+  - admin
+  - moderator
+  - superadmin
+end note
+
+note right of auctions
+  **Status:**
+  - draft
+  - active
+  - closed
+  - frozen
+
+  **Type:**
+  - english (ascending)
+  - dutch (descending)
+  - blind (sealed bid)
+end note
+
+note right of payments
+  **Status:**
+  - pending
+  - held
+  - paid
+  - refunded
+  - failed
+end note
+
+note right of notifications
+  **Type:**
+  - outbid
+  - won
+  - auction_ended
+  - payment_required
+  - payment_received
+
+  **Channel:**
+  - email
+  - telegram
+  - websocket
+end note
+
+note right of event_logs
+  **Event Types:**
+  - auction_created
+  - auction_updated
+  - auction_deleted
+  - auction_activated
+  - auction_closed
+  - auction_frozen
+  - bid_placed
+  - anti_snipe_triggered
+  - user_blocked
+  - payment_created
+  etc.
+end note
+
+@enduml

@@ -1,0 +1,26 @@
+@startuml
+actor Winner as W
+participant "Auction API" as API
+participant "Payment Service (Mock)" as Pay
+database "Payments\n(PostgreSQL)" as PayDB
+collections "event_logs" as Logs
+
+== Завершення аукціону ==
+API -> Pay: create_payment(auction_id, winner_id)
+Pay -> PayDB: INSERT payment\n(status='Pending')
+PayDB --> Pay: payment_id
+Pay -> Logs: payment_created
+Pay --> API: payment_id, status='Pending'
+
+== Підтвердження оплати ==
+W -> API: POST /payments/{id}/confirm
+API -> Pay: confirm_payment(id)
+Pay -> PayDB: UPDATE payment\nset status='Paid'
+Pay -> Logs: payment_paid
+Pay --> API: status='Paid'
+API --> W: Оплату змодельовано\nуспішно
+
+== Відміна інших ставок ==
+Pay -> PayDB: UPDATE other payments\nset status='Refunded'
+Pay -> Logs: payments_refunded
+@enduml

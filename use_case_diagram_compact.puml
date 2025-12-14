@@ -1,0 +1,125 @@
+@startuml Auction System Use Cases
+
+skinparam packageStyle rectangle
+skinparam defaultFontSize 10
+skinparam actorFontSize 10
+skinparam usecaseFontSize 9
+skinparam packageFontSize 10
+skinparam noteFontSize 8
+skinparam dpi 150
+
+' Actors
+actor "Participant" as P #lightblue
+actor "Organizer" as O #lightgreen
+actor "Moderator" as M #lightyellow
+actor "Admin" as A #orange
+actor "System" as S #lightgray
+
+' Inheritance
+O -up-|> P
+A -up-|> M
+
+rectangle "Auction System" {
+
+  package "Auth" #technology {
+    usecase "Register" as UC1
+    usecase "Login" as UC2
+    usecase "Profile" as UC3
+  }
+
+  package "Auctions" #technology {
+    usecase "Create" as UC4
+    usecase "Edit" as UC5
+    usecase "Delete" as UC6
+    usecase "View All" as UC7
+    usecase "Search" as UC8
+    usecase "Filter" as UC9
+  }
+
+  package "Bidding" #business {
+    usecase "Place Bid" as UC10 #pink
+    usecase "Bid History" as UC11
+    usecase "My Bids" as UC12
+    usecase "Outbid Alert" as UC13
+  }
+
+  package "Payment" #business {
+    usecase "Pay Hold" as UC14
+    usecase "Confirm" as UC15
+    usecase "Refund" as UC16
+    usecase "Status" as UC17
+  }
+
+  package "Admin" #implementation {
+    usecase "Block User" as UC18
+    usecase "Unblock" as UC19
+    usecase "Freeze" as UC20
+    usecase "Logs" as UC21
+    usecase "Roles" as UC22
+  }
+
+  package "Analytics" #strategy {
+    usecase "Stats" as UC23
+    usecase "Analytics" as UC24
+    usecase "ML Price" as UC25 #yellow
+    usecase "Activity" as UC26
+  }
+
+  package "Notify" #technology {
+    usecase "Email" as UC27
+    usecase "WS" as UC28 #lightgreen
+  }
+
+  package "Tasks" #application {
+    usecase "Auto-close" as UC29 #lightblue
+    usecase "Auto-start" as UC30
+    usecase "Winner" as UC31 #gold
+  }
+}
+
+' Connections
+P --> UC1
+P --> UC2
+P --> UC3
+P --> UC7
+P --> UC8
+P --> UC9
+P --> UC10
+P --> UC11
+P --> UC12
+P --> UC13
+P --> UC14
+P --> UC15
+P --> UC17
+P --> UC27
+P --> UC28
+
+O --> UC4
+O --> UC5
+O --> UC6
+O --> UC16
+O --> UC23
+O --> UC24
+
+M --> UC18
+M --> UC19
+M --> UC20
+M --> UC21
+
+A --> UC22
+A --> UC23
+A --> UC24
+A --> UC25
+A --> UC26
+
+S --> UC29
+S --> UC30
+S --> UC31
+
+' Relationships
+UC10 .> UC13 : <<include>>
+UC29 .> UC31 : <<include>>
+UC8 .> UC7 : <<extend>>
+UC9 .> UC7 : <<extend>>
+
+@enduml

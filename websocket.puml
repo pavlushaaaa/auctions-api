@@ -1,0 +1,32 @@
+@startuml
+actor Client as C
+
+rectangle "WebSocket Gateway" as WS {
+}
+
+rectangle "FastAPI Backend" as API {
+}
+
+rectangle "Redis Pub/Sub" as Redis {
+}
+
+rectangle "Celery Worker" as Celery {
+}
+
+database "PostgreSQL\n(RDS)" as DB
+
+C -[#blue]-> WS : Встановлення\nWebSocket-з'єднання
+WS -[#blue]-> Redis : Підписка на\nканали аукціонів
+
+C -[#green]-> API : HTTP POST /bids\n(нова ставка)
+API -[#green]-> DB : Збереження ставки\nта оновлення ціни
+API -[#green]-> Redis : Публікація події\n"new_bid"
+
+Redis -[#orange]-> WS : Broadcast "new_bid"
+WS -[#orange]-> C : Оновлення ціни\nв реальному часі
+
+Celery -[#purple]-> DB : Перевірка дедлайну\nта стану аукціону
+Celery -[#purple]-> Redis : Публікація події\n"auction_closed"
+Redis -[#purple]-> WS : Broadcast "auction_closed"
+WS -[#purple]-> C : Сповіщення про\nзавершення аукціону
+@enduml

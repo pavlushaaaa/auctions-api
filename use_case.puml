@@ -1,0 +1,39 @@
+@startuml
+left to right direction
+
+actor "Учасник\n(Participant)" as User
+actor "Організатор\n(Organizer)" as Org
+actor "Адміністратор\n(Admin)" as Adm
+actor "Фоновий сервіс\n(Background Worker)" as BW
+
+rectangle "Auction System" {
+  usecase "UC-01\nРеєстрація" as UC1
+  usecase "UC-02\nВхід (JWT)" as UC2
+  usecase "UC-03\nПерегляд аукціонів" as UC3
+  usecase "UC-04\nЗдійснення ставки" as UC4
+  usecase "UC-05\nМої ставки" as UC5
+
+  usecase "UC-06\nСтворення аукціону" as UC6
+  usecase "UC-07\nКерування аукціоном" as UC7
+
+  usecase "UC-08\nАвтоматичне завершення" as UC8
+  usecase "UC-09\nEmail-сповіщення" as UC9
+
+  usecase "UC-10\nПерегляд журналів" as UC10
+}
+
+User --> UC1
+User --> UC2
+User --> UC3
+User --> UC4
+User --> UC5
+
+Org --> UC6
+Org --> UC7
+
+BW --> UC8
+BW --> UC9
+
+Adm --> UC10
+
+@enduml

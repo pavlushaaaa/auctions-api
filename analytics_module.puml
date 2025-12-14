@@ -1,0 +1,22 @@
+@startuml
+database "PostgreSQL\n(bids, auctions, event_logs)" as DB
+rectangle "Celery Data Aggregator" as Agg
+database "Analytics Storage\n(aggregated_stats)" as AST
+rectangle "Analytics API\n(FastAPI)" as API
+actor Organizer as Org
+actor Admin as Adm
+
+DB --> Agg: Сирі дані\n(ставки, аукціони, події)
+Agg -> Agg: Агрегація метрик\n(кількість ставок,\nінтервали, приріст ціни)
+Agg --> AST: Запис агрегованих\nстатистичних показників
+
+Org --> API: GET /analytics/my-auctions
+API -> AST: Запит агрегованих даних
+AST --> API: Метрики по аукціонах
+API --> Org: Звіт / графіки
+
+Adm --> API: GET /analytics/global
+API -> AST: Глобальна статистика
+AST --> API: Сумарні показники
+API --> Adm: Аналітичний звіт
+@enduml

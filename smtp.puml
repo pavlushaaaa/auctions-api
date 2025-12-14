@@ -1,0 +1,26 @@
+@startuml
+participant "Celery Worker" as W
+database "PostgreSQL" as DB
+participant "Notification Service" as Notif
+participant "SMTP Client" as SMTPc
+participant "SMTP Server" as SMTPs
+actor "Учасник-переможець" as U
+
+W -> DB: SELECT finished auctions\nбез winner_notified
+DB --> W: Список аукціонів
+
+W -> DB: SELECT winner, auction_info
+DB --> W: Дані переможця + лота
+
+W -> Notif: create_email(auction, winner)
+Notif -> SMTPc: send(email)
+SMTPc -> SMTPs: SMTP SEND
+SMTPs --> SMTPc: 250 OK
+
+SMTPc --> Notif: sent
+Notif -> DB: UPDATE auctions\nset winner_notified = true
+Notif -> DB: INSERT INTO event_logs\n(type='email_sent', ...)
+
+... Далі ...
+U -> U: Отримує email\nта відкриває посилання
+@enduml

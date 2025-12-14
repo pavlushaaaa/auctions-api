@@ -1,0 +1,164 @@
+@startuml Auction System Use Cases
+
+' Set horizontal orientation
+left to right direction
+skinparam packageStyle rectangle
+
+' Actors on the left
+actor "Participant\n(Учасник)" as Participant #lightblue
+actor "Organizer\n(Організатор)" as Organizer #lightgreen
+actor "Moderator\n(Модератор)" as Moderator #lightyellow
+actor "Admin\n(Адміністратор)" as Admin #orange
+actor "System\n(Celery)" as System #lightgray
+
+' Inheritance
+Organizer -up-|> Participant
+Admin -up-|> Moderator
+
+' Main system boundary
+rectangle "Auction System" #white {
+
+  ' Top row packages
+  together {
+    package "Authentication" #technology {
+      usecase "Register\nAccount" as UC1
+      usecase "Login" as UC2
+      usecase "View\nProfile" as UC3
+    }
+
+    package "Auction Management" #technology {
+      usecase "Create\nAuction" as UC4
+      usecase "Edit\nAuction" as UC5
+      usecase "Delete\nAuction" as UC6
+      usecase "View\nAuctions" as UC7
+      usecase "Search\nAuctions" as UC8
+      usecase "Filter by\nCategory" as UC9
+    }
+
+    package "Bidding" #business {
+      usecase "Place Bid\n(race protection)" as UC10 #pink
+      usecase "View Bid\nHistory" as UC11
+      usecase "View My\nBids" as UC12
+      usecase "Receive Outbid\nNotification" as UC13
+    }
+
+    package "Payment" #business {
+      usecase "Create\nPayment Hold" as UC14
+      usecase "Confirm\nPayment" as UC15
+      usecase "Request\nRefund" as UC16
+      usecase "View Payment\nStatus" as UC17
+    }
+  }
+
+  ' Bottom row packages
+  together {
+    package "Administration" #implementation {
+      usecase "Block\nUser" as UC18
+      usecase "Unblock\nUser" as UC19
+      usecase "Freeze\nAuction" as UC20
+      usecase "View Audit\nLogs" as UC21
+      usecase "Manage User\nRoles" as UC22
+    }
+
+    package "Analytics" #strategy {
+      usecase "View\nStatistics" as UC23
+      usecase "View Auction\nAnalytics" as UC24
+      usecase "Predict Final\nPrice (ML)" as UC25 #yellow
+      usecase "View User\nActivity" as UC26
+    }
+
+    package "Notifications" #technology {
+      usecase "Receive Email\nNotifications" as UC27
+      usecase "Receive Real-time\nUpdates (WebSocket)" as UC28 #lightgreen
+    }
+
+    package "Background Tasks" #application {
+      usecase "Auto-close\nExpired Auctions" as UC29 #lightblue
+      usecase "Auto-activate\nScheduled Auctions" as UC30
+      usecase "Determine\nWinner" as UC31 #gold
+    }
+  }
+}
+
+' Participant connections
+Participant --> UC1
+Participant --> UC2
+Participant --> UC3
+Participant --> UC7
+Participant --> UC8
+Participant --> UC9
+Participant --> UC10
+Participant --> UC11
+Participant --> UC12
+Participant --> UC13
+Participant --> UC14
+Participant --> UC15
+Participant --> UC17
+Participant --> UC27
+Participant --> UC28
+
+' Organizer connections (inherits from Participant + additional)
+Organizer --> UC4
+Organizer --> UC5
+Organizer --> UC6
+Organizer --> UC16
+Organizer --> UC23
+Organizer --> UC24
+
+' Moderator connections
+Moderator --> UC18
+Moderator --> UC19
+Moderator --> UC20
+Moderator --> UC21
+
+' Admin connections (inherits from Moderator + additional)
+Admin --> UC22
+Admin --> UC23
+Admin --> UC24
+Admin --> UC25
+Admin --> UC26
+
+' System connections
+System --> UC29
+System --> UC30
+System --> UC31
+
+' Relationships
+UC10 .> UC13 : <<include>>
+UC29 .> UC31 : <<include>>
+UC8 .> UC7 : <<extend>>
+UC9 .> UC7 : <<extend>>
+
+note right of UC10
+  **Race Condition Protection**
+  Uses PostgreSQL SELECT FOR UPDATE
+  to prevent concurrent bid conflicts
+end note
+
+note right of UC29
+  **Scheduled Task**
+  Runs every minute via Celery Beat
+  Closes auctions where end_time <= now
+end note
+
+note right of UC31
+  **Winner Selection**
+  SELECT user_id FROM bids
+  WHERE auction_id = X
+  ORDER BY amount DESC LIMIT 1
+end note
+
+note right of UC25
+  **Machine Learning**
+  Uses scikit-learn Linear Regression
+  to predict final auction price
+end note
+
+note bottom of System
+  **Celery Configuration**
+  Broker: Redis
+  Schedule: crontab(minute='*/1')
+  Tasks: 3 background jobs
+end note
+
+@enduml

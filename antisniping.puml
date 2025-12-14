@@ -1,0 +1,24 @@
+@startuml
+actor Participant as P
+participant "API /bids" as API
+database "PostgreSQL" as DB
+participant "AntiSniping Service" as AS
+collections "event_logs" as Logs
+
+P -> API: POST /auctions/{id}/bids\n(amount, JWT)
+API -> DB: SELECT auction BY id\n(із блокуванням рядка)
+DB --> API: auction (end_time, current_price)
+
+API -> AS: check_and_extend(auction, now)
+AS -> AS: delta = end_time - now
+AS -> AS: if delta < THRESHOLD\nand ext_count < MAX_EXT
+AS -> DB: UPDATE auctions\nset end_time += EXTEND_TIME,\nextend_count += 1
+AS -> Logs: INSERT anti_sniping_triggered
+AS --> API: result: extended / not_extended
+
+API -> DB: INSERT new bid\n+ UPDATE current_price
+API -> Logs: INSERT bid_created
+API --> P: Результат: ставка прийнята\n(з info про можливе продовження)
+
+@enduml
+
