@@ -1,0 +1,227 @@
+@startuml component_diagram
+!define RECTANGLE class
+
+skinparam component {
+    BackgroundColor<<external>> LightBlue
+    BackgroundColor<<database>> LightGreen
+    BackgroundColor<<service>> LightYellow
+    BackgroundColor<<api>> Orange
+    BackgroundColor<<core>> Pink
+}
+
+title Component Diagram - Auction System
+
+' External Clients
+package "Клієнти" {
+    [Web Browser] <<external>>
+    [Mobile App] <<external>>
+}
+
+' API Layer
+package "API Layer" {
+    component "FastAPI Application" <<api>> {
+        [Main App] as main
+        [CORS Middleware] as cors
+        [API Router v1] as router
+    }
+
+    package "API Endpoints" <<api>> {
+        [Auth Endpoint] as auth_ep
+        [Auctions Endpoint] as auctions_ep
+        [Bids Endpoint] as bids_ep
+        [Payments Endpoint] as payments_ep
+        [Analytics Endpoint] as analytics_ep
+        [Admin Endpoint] as admin_ep
+        [Categories Endpoint] as categories_ep
+        [WebSocket Endpoint] as ws_ep
+    }
+}
+
+' Core Layer
+package "Core Layer" <<core>> {
+    [Configuration] as config
+    [Security] as security
+    [Dependencies] as deps
+}
+
+' Models Layer
+package "Data Models" {
+    [User Model] as user_model
+    [Auction Model] as auction_model
+    [Bid Model] as bid_model
+    [Payment Model] as payment_model
+    [Notification Model] as notification_model
+    [Event Log Model] as event_model
+}
+
+' Schemas Layer
+package "Schemas (Pydantic)" {
+    [User Schema] as user_schema
+    [Auction Schema] as auction_schema
+    [Bid Schema] as bid_schema
+    [Payment Schema] as payment_schema
+}
+
+' Services Layer
+package "Business Services" <<service>> {
+    [WebSocket Manager] as ws_manager
+    [Payment Service] as payment_service
+    [Notification Service] as notification_service
+    [Auction Tasks] as auction_tasks
+}
+
+' Background Processing
+package "Background Processing" {
+    component "Celery" <<service>> {
+        [Celery Worker] as celery_worker
+        [Celery Beat] as celery_beat
+        [Task Queue] as task_queue
+    }
+}
+
+' Database Layer
+package "Data Layer" <<database>> {
+    database "PostgreSQL" {
+        [Users Table] as users_db
+        [Auctions Table] as auctions_db
+        [Bids Table] as bids_db
+        [Payments Table] as payments_db
+        [Notifications Table] as notifications_db
+        [Event Logs Table] as events_db
+    }
+
+    [SQLAlchemy ORM] as orm
+    [Alembic Migrations] as alembic
+}
+
+' External Services
+package "External Services" <<external>> {
+    [Redis Cache/Broker] as redis
+    [SMTP Server] as smtp
+}
+
+' Connections - Clients to API
+[Web Browser] --> main : HTTP/WebSocket
+[Mobile App] --> main : HTTP/WebSocket
+
+' API Internal Structure
+main --> cors
+main --> router
+router --> auth_ep
+router --> auctions_ep
+router --> bids_ep
+router --> payments_ep
+router --> analytics_ep
+router --> admin_ep
+router --> categories_ep
+router --> ws_ep
+
+' API to Core
+auth_ep --> security : Authentication
+auctions_ep --> deps : Dependencies
+bids_ep --> deps : Dependencies
+payments_ep --> deps : Dependencies
+admin_ep --> deps : Authorization
+analytics_ep --> deps : Dependencies
+
+auth_ep --> config : Settings
+auctions_ep --> config : Settings
+payments_ep --> config : Settings
+
+' API to Services
+ws_ep --> ws_manager : Real-time Updates
+payments_ep --> payment_service : Process Payments
+auctions_ep --> auction_tasks : Schedule Tasks
+bids_ep --> auction_tasks : Trigger Events
+admin_ep --> notification_service : Send Notifications
+
+' API to Models
+auth_ep --> user_model
+auctions_ep --> auction_model
+bids_ep --> bid_model
+payments_ep --> payment_model
+admin_ep --> event_model
+
+' API to Schemas
+auth_ep --> user_schema : Validation
+auctions_ep --> auction_schema : Validation
+bids_ep --> bid_schema : Validation
+payments_ep --> payment_schema : Validation
+
+' Services to Models
+ws_manager --> auction_model
+payment_service --> payment_model
+notification_service --> notification_model
+auction_tasks --> auction_model
+auction_tasks --> bid_model
+
+' Models to ORM
+user_model --> orm
+auction_model --> orm
+bid_model --> orm
+payment_model --> orm
+notification_model --> orm
+event_model --> orm
+
+' ORM to Database
+orm --> users_db
+orm --> auctions_db
+orm --> bids_db
+orm --> payments_db
+orm --> notifications_db
+orm --> events_db
+
+alembic --> users_db : Migrations
+alembic --> auctions_db : Migrations
+alembic --> bids_db : Migrations
+alembic --> payments_db : Migrations
+alembic --> notifications_db : Migrations
+alembic --> events_db : Migrations
+
+' Background Processing
+auction_tasks --> task_queue : Enqueue Tasks
+notification_service --> task_queue : Async Notifications
+task_queue --> celery_worker : Process
+celery_beat --> celery_worker : Scheduled Jobs
+
+celery_worker --> redis : Results Backend
+task_queue --> redis : Message Broker
+celery_worker --> orm : Database Access
+celery_worker --> smtp : Send Emails
+
+' WebSocket to Redis
+ws_manager ..> redis : Pub/Sub (optional)
+
+' Notes
+note right of main
+  FastAPI application
+  with Uvicorn server
+end note
+
+note right of ws_manager
+  Manages WebSocket
+  connections for
+  real-time auction updates
+end note
+
+note right of payment_service
+  Mock payment service
+  (Stripe/PayPal sandbox)
+end note
+
+note right of celery_worker
+  Background tasks:
+  - Auction closing
+  - Email notifications
+  - Payment processing
+  - Analytics
+end note
+
+note right of redis
+  Used for:
+  - Celery broker
+  - Celery results
+  - Caching (optional)
+end note
+
+@enduml
